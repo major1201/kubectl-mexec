@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+parallel=${PARALLEL-1}
+local_dir=.
+remote_file=
+declare -a kgp_args kcp_args
+
+errecho() {
+    >&2 echo "${@//$'\n'/}"
+}
+
+display_help() {
+	echo "Usage:"
+    echo "  kubectl batch download [-c container_name] [-h] [-p parallel] [--local-directory <local-file>] --remote-path <remote-file-path>"
+    echo
+    echo "Parameters:"
+    echo "  -h,--help              show this help message"
+    echo "  -c,--container         specify container name"
+    echo "  --retries              set number of retries to complete a copy operation from a container"
+    echo "  -p,--parallel          set concurrent processes, default to 1"
+    echo "  -d,--local-directory   local file to upload"
+    echo "  -r,--remote-path       remote path"
+    echo
+    echo "Examples:"
+    echo "  # Download ./tmp/local-file from every pod with label app.kubernetes.io/name=myapp to pwd with pod name for each pod"
+    echo "  kubectl batch download -l app.kubernetes.io/name=myapp --remote-path /tmp/local-file"
+    echo
+    echo "  # Download file with concurrent 10 processes in parallel"
+    echo "  kubectl batch download -l app.kubernetes.io/name=myapp --remote-path /tmp/local-file -p 10"
+}
+
+parse_arguments() {
+    if [[ "$#" = "0" ]]; then
+        display_help
+        exit 1
+    fi
+
+    while :
+    do
+        if [[ "$#" = "0" ]]; then
+            break
+        fi
+
+        case "$1" in
+        -h|--help)
+            display_help
+            exit
+        ;;
+        -p|--parallel)
+            parallel=$2
+            shift 2
+        ;;
+        -d|--local-directory)
+            local_dir=$2
+            shift 2
+        ;;
+        -r|--remote-path)
+            remote_file=$2
+            shift 2
+        ;;
+        -c|--container|--retries)
+            kcp_args+=("$1" "$2")
+            shift 2
+        ;;
+        *)
+            kgp_args+=("$1")
+            shift
+        ;;
+        esac
+    done
+}
+
+main() {
+    parse_arguments "$@"
+
+    if [[ -z "${remote_file}" ]]; then
+        errecho "Error: remote path not provided by --remote-path"
+        exit 1
+    fi
+
+    if [[ ! -d "${local_dir}" ]]; then
+        errecho "Error: '${local_dir}' is not a directory"
+    fi
+
+    kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | xargs -P "${parallel}" -I{} bash -c "kubectl cp ${kcp_args[*]} {}:${remote_file@Q} ${local_dir@Q}/{} |& sed s/^/{}\ /g"
+}
+
+main "$@"

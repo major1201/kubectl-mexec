@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPTPATH=$( dirname "$(realpath "$0")" )
+
+parallel=${PARALLEL-1}
+local_file=
+declare -a kgp_args keti_args kcp_args cmd
+
+errecho() {
+    >&2 echo "${@//$'\n'/}"
+}
+
+display_help() {
+	echo "Usage:"
+    echo "  kubectl batch exec [-c container_name] [-h] [-p parallel] <kubectl get pod pattern> -- cmd"
+    echo
+    echo "Parameters:"
+    echo "  -c,--container     specify container name"
+    echo "  -h,--help          show this help message"
+    echo "  -p,--parallel      set concurrent processes, default to 1"
+    echo "  -F,--local-file    execute local file on pods"
+    echo
+    echo "Examples:"
+    echo "  # Run 'ls' on every pod with selector 'app.kubernetes.io/name=myapp'"
+    echo "  kubectl batch exec -l app.kubernetes.io/name=myapp -- ls"
+    echo
+    echo "  # With parallel 100 pods"
+    echo "  kubectl batch exec -p 100 -- cmd"
+    echo
+    echo "  # Run bash script"
+    echo '  kubectl batch exec -- bash -c "tail -n 10 /etc/passwd | grep root"'
+    echo
+    echo "  # Run local script file"
+    echo "  kubectl batch exec -F ./myscript.sh"
+}
+
+parse_arguments() {
+    if [[ "$#" = "0" ]]; then
+        display_help
+        exit 1
+    fi
+
+    while :
+    do
+        if [[ "$#" = "0" ]]; then
+            break
+        fi
+
+        # case "${1?cmd must be provided after "--"}" in
+        case "$1" in
+        -h|--help)
+            display_help
+            exit
+        ;;
+        -p|--parallel)
+            parallel=$2
+            shift 2
+        ;;
+        -F|--local-file)
+            local_file=$2
+            shift 2
+        ;;
+        --)
+            shift
+            cmd+=("$@")
+            break
+        ;;
+        -c|--container)
+            # pass to kubectl exec
+            keti_args+=("$1" "$2")
+            kcp_args+=("$1" "$2")
+            shift 2
+        ;;
+        -n|--namespace)
+            # pass to both kgp and kubectl exec
+            kgp_args+=("$1" "$2")
+            keti_args+=("$1" "$2")
+            kcp_args+=("$1" "$2")
+            shift 2
+        ;;
+        -o|--output)
+            # ignore
+            shift 2
+        ;;
+        *)
+            kgp_args+=("$1")
+            shift
+        ;;
+        esac
+    done
+}
+
+cleanup() {
+    rm -f "${temp_file}"
+}
+
+main() {
+    parse_arguments "$@"
+
+    if [[ -z "${local_file}" ]]; then
+        kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | xargs -P "${parallel}" -I{} bash -c "kubectl exec ${keti_args[*]@Q} {} -- ${cmd[*]@Q} |& sed s/^/{}\ /g"
+    else
+        if [[ ! -f "${local_file}" ]];  then
+            errecho "Error: local file ${local_file} not found"
+            exit 1
+        fi
+
+        remote_file=/kb-$(date '+%Y%m%d%H%M%S')
+        pods=$(kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}')
+
+        export remote_file base64_encoded
+        base64_encoded=$(base64 -i "${local_file}")
+        temp_file=$(mktemp)
+        trap 'cleanup' EXIT
+
+        envsubst < "${SCRIPTPATH}/scripts/remote_run_tmpl.sh" > "${temp_file}"
+        chmod +x "${temp_file}"
+
+        echo "Uploading file to ${remote_file}, cleanup automatically"
+        echo "${pods}" | xargs -P "${parallel}" -I{} bash -c "kubectl cp ${kcp_args[*]} ${temp_file} {}:${remote_file} |& sed s/^/{}\ /g"
+
+        echo
+        echo "Running script on every pod"
+        echo "${pods}" | xargs -P "${parallel}" -I{} bash -c "kubectl exec ${keti_args[*]} {} -- ${remote_file} |& sed s/^/{}\ /g"
+    fi
+}
+
+main "$@"

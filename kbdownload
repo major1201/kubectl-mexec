@@ -64,6 +64,12 @@ parse_arguments() {
             kcp_args+=("$1" "$2")
             shift 2
         ;;
+        -n|--namespace)
+            # pass to both kgp and kubectl exec
+            kgp_args+=("$1" "$2")
+            kcp_args+=("$1" "$2")
+            shift 2
+        ;;
         *)
             kgp_args+=("$1")
             shift

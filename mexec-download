@@ -13,7 +13,7 @@ errecho() {
 
 display_help() {
 	echo "Usage:"
-    echo "  kubectl batch download [-c container_name] [-h] [-p parallel] [--local-directory <local-file>] --remote-path <remote-file-path>"
+    echo "  kubectl mexec download [-c container_name] [-h] [-p parallel] [--local-directory <local-file>] --remote-path <remote-file-path>"
     echo
     echo "Parameters:"
     echo "  -h,--help              show this help message"
@@ -25,10 +25,10 @@ display_help() {
     echo
     echo "Examples:"
     echo "  # Download ./tmp/local-file from every pod with label app.kubernetes.io/name=myapp to pwd with pod name for each pod"
-    echo "  kubectl batch download -l app.kubernetes.io/name=myapp --remote-path /tmp/local-file"
+    echo "  kubectl mexec download -l app.kubernetes.io/name=myapp --remote-path /tmp/local-file"
     echo
     echo "  # Download file with concurrent 10 processes in parallel"
-    echo "  kubectl batch download -l app.kubernetes.io/name=myapp --remote-path /tmp/local-file -p 10"
+    echo "  kubectl mexec download -l app.kubernetes.io/name=myapp --remote-path /tmp/local-file -p 10"
 }
 
 parse_arguments() {

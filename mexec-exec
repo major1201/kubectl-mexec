@@ -12,29 +12,7 @@ errecho() {
     >&2 echo "${@//$'\n'/}"
 }
 
-display_help() {
-	echo "Usage:"
-    echo "  kubectl batch exec [-c container_name] [-h] [-p parallel] <kubectl get pod pattern> -- cmd"
-    echo
-    echo "Parameters:"
-    echo "  -c,--container     specify container name"
-    echo "  -h,--help          show this help message"
-    echo "  -p,--parallel      set concurrent processes, default to 1"
-    echo "  -F,--local-file    execute local file on pods"
-    echo
-    echo "Examples:"
-    echo "  # Run 'ls' on every pod with selector 'app.kubernetes.io/name=myapp'"
-    echo "  kubectl batch exec -l app.kubernetes.io/name=myapp -- ls"
-    echo
-    echo "  # With parallel 100 pods"
-    echo "  kubectl batch exec -p 100 -- cmd"
-    echo
-    echo "  # Run bash script"
-    echo '  kubectl batch exec -- bash -c "tail -n 10 /etc/passwd | grep root"'
-    echo
-    echo "  # Run local script file"
-    echo "  kubectl batch exec -F ./myscript.sh"
-}
+source "${SCRIPTPATH}/display-help.sh"
 
 parse_arguments() {
     if [[ "$#" = "0" ]]; then
@@ -107,7 +85,7 @@ main() {
             exit 1
         fi
 
-        remote_file=/kb-$(date '+%Y%m%d%H%M%S')
+        remote_file=/kmexec-$(date '+%Y%m%d%H%M%S')
         pods=$(kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}')
 
         export remote_file base64_encoded

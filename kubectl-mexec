@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPTPATH=$( dirname "$(realpath "$0")" )
+
+errecho() {
+    >&2 echo "${@//$'\n'/}"
+}
+
+source "${SCRIPTPATH}/display-help.sh"
+
+main() {
+    case "${1-help}" in
+    -h|--help|help)
+        display_help
+        exit
+        ;;
+    exec|download|upload)
+        subcmd=$1
+        shift
+        exec "${SCRIPTPATH}/mexec-${subcmd}" "$@"
+        ;;
+    *)
+        # use "exec" as default subcommand
+        exec "${SCRIPTPATH}/mexec-exec" "$@"
+        ;;
+    esac
+}
+
+main "$@"

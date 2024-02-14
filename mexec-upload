@@ -13,7 +13,7 @@ errecho() {
 
 display_help() {
 	echo "Usage:"
-    echo "  kubectl batch upload [-c container_name] [-h] [-p parallel] --local-file <local-file> --remote-path <remote-file-path>"
+    echo "  kubectl mexec upload [-c container_name] [-h] [-p parallel] --local-file <local-file> --remote-path <remote-file-path>"
     echo
     echo "Parameters:"
     echo "  -h,--help          show this help message"
@@ -25,10 +25,10 @@ display_help() {
     echo
     echo "Examples:"
     echo "  # Upload ./local-file to every pod with label app.kubernetes.io/name=myapp in /tmp/local-file"
-    echo "  kubectl batch upload -l app.kubernetes.io/name=myapp --local-file ./local-file --remote-path /tmp/local-file"
+    echo "  kubectl mexec upload -l app.kubernetes.io/name=myapp --local-file ./local-file --remote-path /tmp/local-file"
     echo
     echo "  # Upload file with concurrent 10 processes in parallel"
-    echo "  kubectl batch upload -p 10 -l app.kubernetes.io/name=myapp -F ./local-file -r /tmp/local-file"
+    echo "  kubectl mexec upload -p 10 -l app.kubernetes.io/name=myapp -F ./local-file -r /tmp/local-file"
 }
 
 parse_arguments() {

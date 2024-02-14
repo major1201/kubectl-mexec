@@ -18,7 +18,7 @@ ln -s ./kubectl-mexec /usr/local/bin/kubectl-mexec
 
 ## Usage
 
-### exec: Execute on your pods
+### Execute on your pods
 
 ```
 Usage:

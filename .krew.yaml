@@ -1,0 +1,30 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: mexec
+spec:
+  version: "{{ .TagName }}"
+  homepage: https://github.com/major1201/kubectl-mexec
+  shortDescription: "Execute on multiple pods in parallel"
+  description: A fast way to run kubectl exec/cp on multiple pods in parallel.
+  platforms:
+  - selector:
+      matchExpressions:
+      - key: "os"
+        operator: "In"
+        values:
+        - darwin
+        - linux
+    {{addURIAndSha "https://github.com/major1201/kubectl-mexec/archive/refs/tags/{{ .TagName }}.tar.gz" .TagName }}
+    files:
+    - from: "kubectl-mexec-*/kubectl-mexec"
+      to: "."
+    - from: "kubectl-mexec-*/mexec-*"
+      to: "."
+    - from: "kubectl-mexec-*/display-help.sh"
+      to: "."
+    - from: "kubectl-mexec-*/scripts"
+      to: "."
+    - from: "kubectl-mexec-*/LICENSE"
+      to: "."
+    bin: kubectl-mexec

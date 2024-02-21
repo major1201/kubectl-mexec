@@ -4,6 +4,22 @@ A fast way to run kubectl exec/cp on multiple pods in parallel.
 
 ## Install
 
+### Krew install
+
+Make sure you've already installed [krew](https://github.com/kubernetes-sigs/krew) (a kubectl plugin manager).
+
+```bash
+# install kubectl-mexec plugin
+kubectl krew update
+kubectl krew install mexec
+```
+
+Start to use
+
+```bash
+kubectl mexec -h
+```
+
 ### Local install
 
 First make sure you have already installed kubectl.

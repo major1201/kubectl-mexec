@@ -78,7 +78,7 @@ main() {
     parse_arguments "$@"
 
     if [[ -z "${local_file}" ]]; then
-        kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | xargs -P "${parallel}" -I{} bash -c "kubectl exec ${keti_args[*]@Q} {} -- ${cmd[*]@Q} |& sed s/^/{}\ /g"
+        kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | xargs -S10240 -P "${parallel}" -I{} bash -c "kubectl exec ${keti_args[*]@Q} {} -- ${cmd[*]@Q} |& sed s/^/{}\ /g"
     else
         if [[ ! -f "${local_file}" ]];  then
             errecho "Error: local file ${local_file} not found"

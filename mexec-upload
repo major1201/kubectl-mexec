@@ -85,7 +85,7 @@ main() {
         exit 1
     fi
 
-    kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | xargs -P "${parallel}" -I{} bash -c "kubectl cp ${kcp_args[*]} ${local_file@Q} {}:${remote_file@Q} |& sed s/^/{}\ /g"
+    kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | ${XARGS} -P "${parallel}" -I{} bash -c "kubectl cp ${kcp_args[*]} ${local_file@Q} {}:${remote_file@Q} |& sed s/^/{}\ /g"
 }
 
 main "$@"

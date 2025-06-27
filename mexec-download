@@ -90,7 +90,7 @@ main() {
         errecho "Error: '${local_dir}' is not a directory"
     fi
 
-    kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | xargs -P "${parallel}" -I{} bash -c "kubectl cp ${kcp_args[*]} {}:${remote_file@Q} ${local_dir@Q}/{} |& sed s/^/{}\ /g"
+    kubectl get pod "${kgp_args[@]}" -o name | awk -F/ '{print $2}' | ${XARGS} -P "${parallel}" -I{} bash -c "kubectl cp ${kcp_args[*]} {}:${remote_file@Q} ${local_dir@Q}/{} |& sed s/^/{}\ /g"
 }
 
 main "$@"

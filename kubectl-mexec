@@ -10,7 +10,21 @@ errecho() {
 
 source "${SCRIPTPATH}/display-help.sh"
 
+define_xargs() {
+    export XARGS="xargs"
+
+    if [[ "$(uname)" = "Darwin" ]]; then
+        if type -p gxargs &>/dev/null; then
+            XARGS=gxargs
+        else
+            XARGS="xargs -S10240"
+        fi
+    fi
+}
+
 main() {
+    define_xargs
+
     case "${1-help}" in
     -h|--help|help)
         display_help
